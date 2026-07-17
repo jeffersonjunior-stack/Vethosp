@@ -1,75 +1,42 @@
 package br.edu.ifrn.vethosp.servico;
 
-import br.edu.ifrn.vethosp.modelo.Box;
-import br.edu.ifrn.vethosp.repositorio.GerenciadorDeConexao;
-import br.edu.ifrn.vethosp.repositorio.RepositorioException;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.List;
+import br.edu.ifrn.vethosp.modelo.Box;
+import br.edu.ifrn.vethosp.modelo.Setor;
+import br.edu.ifrn.vethosp.repositorio.BoxRepositorio;
+import br.edu.ifrn.vethosp.repositorio.RepositorioException;
 
 public class BoxServico {
 
-    // Método para cadastrar um novo Box associado a um Setor
+    private BoxRepositorio boxRepositorio = new BoxRepositorio();
+    private SetorServico setorServico = new SetorServico();
+
+    // Regra de negócio: Cadastrar Box e incrementar o contador do Setor
     public void cadastrarBox(Box box) throws RepositorioException {
-        String sql = "INSERT INTO box (identificador, status, setor_id) VALUES (?, ?, ?)";
+        Setor setor = box.getSetor();
 
-        try (Connection conexao = GerenciadorDeConexao.getConnection();
-             PreparedStatement stmt = conexao.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-            // Se o atributo na sua classe Box ainda se chamar getNumero(), 
-            // transformamos ele em texto usando String.valueOf() para gravar na coluna 'identificador'
-            stmt.setString(1, String.valueOf(box.getNumero()));
-            stmt.setString(2, box.getStatus().name()); 
-            stmt.setLong(3, box.getSetor().getId());
-
-            stmt.executeUpdate();
-
-            try (ResultSet rs = stmt.getGeneratedKeys()) {
-                if (rs.next()) {
-                    box.setId(rs.getLong(1));
-                }
-            }
-
-            System.out.println("Box cadastrado com sucesso no banco de dados. Identificador: " + box.getNumero());
-
-        } catch (SQLException e) {
-            throw new RepositorioException("Erro ao cadastrar o box no banco de dados.", e);
+        if (setor == null) {
+            throw new IllegalArgumentException("O box precisa estar associado a um setor válido.");
         }
+
+        if (setor.isLotado()) {
+            throw new IllegalStateException("Não é possível adicionar o box. O setor já está lotado!");
+        }
+
+        // 1. Salva o box no banco de dados usando o repositório
+        boxRepositorio.inserir(box);
+
+        // 2. Atualiza a contagem de boxes ocupados na memória do Java
+        setor.setBoxesOcupados(setor.getBoxesOcupados() + 1);
+        
+        // 3. Persiste a alteração do setor no banco de dados
+        setorServico.atualizarSetor(setor);
+        
+        System.out.println("Box cadastrado com sucesso: " + box.getIdentificador());
     }
 
-    // Método para listar todos os boxes cadastrados
+    // Retorna todos os boxes com seus respectivos setores já populados
     public List<Box> listarTodos() throws RepositorioException {
-        List<Box> boxes = new ArrayList<>();
-        String sql = "SELECT * FROM box";
-
-        try (Connection conexao = GerenciadorDeConexao.getConnection();
-             PreparedStatement stmt = conexao.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                Box box = new Box();
-                box.setId(rs.getLong("id"));
-                
-                // Converte de volta o identificador do banco para o número na classe Java
-                try {
-                    box.setNumero(Integer.parseInt(rs.getString("identificador")));
-                } catch (NumberFormatException e) {
-                    // Evita que o programa quebre se o identificador não for apenas números
-                    box.setNumero(0); 
-                }
-                
-                boxes.add(box);
-            }
-
-        } catch (SQLException e) {
-            throw new RepositorioException("Erro ao buscar a lista de boxes no banco de dados.", e);
-        }
-
-        return boxes;
+        return boxRepositorio.selecionarTodos();
     }
 }
