@@ -1,68 +1,35 @@
 package br.edu.ifrn.vethosp.servico;
 
 import br.edu.ifrn.vethosp.modelo.Setor;
-import br.edu.ifrn.vethosp.repositorio.GerenciadorDeConexao;
+import br.edu.ifrn.vethosp.repositorio.SetorRepositorio;
 import br.edu.ifrn.vethosp.repositorio.RepositorioException;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.List;
 
 public class SetorServico {
 
-    // Método para cadastrar um novo setor no banco de dados
+    private SetorRepositorio setorRepositorio = new SetorRepositorio();
+
+    // Método para cadastrar um novo setor (com validação de negócio antes de salvar no banco)
     public void cadastrarSetor(Setor setor) throws RepositorioException {
-        String sql = "INSERT INTO setor (nome, capacidade_max, boxes_ocupados) VALUES (?, ?, ?)";
-
-        try (Connection conexao = GerenciadorDeConexao.getConnection();
-             PreparedStatement stmt = conexao.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-            stmt.setString(1, setor.getNome());
-            stmt.setInt(2, setor.getCapacidadeMax());
-            stmt.setInt(3, setor.getBoxesOcupados());
-
-            stmt.executeUpdate();
-
-            // Recupera o ID gerado pelo MySQL
-            try (ResultSet rs = stmt.getGeneratedKeys()) {
-                if (rs.next()) {
-                    setor.setId(rs.getLong(1));
-                }
-            }
-
-            System.out.println("Setor cadastrado com sucesso no banco de dados: " + setor.getNome());
-
-        } catch (SQLException e) {
-            throw new RepositorioException("Erro ao cadastrar o setor no banco de dados.", e);
+        if (setor.getCapacidadeMax() <= 0) {
+            throw new IllegalArgumentException("A capacidade máxima deve ser maior que zero.");
         }
+        
+        // Agora o serviço apenas "manda" o repositório salvar
+        setorRepositorio.inserir(setor);
+        
+        System.out.println("Setor cadastrado com sucesso: " + setor.getNome());
+    }
+
+    // Método para atualizar a contagem de boxes ocupados
+    public void atualizarSetor(Setor setor) throws RepositorioException {
+        setorRepositorio.atualizar(setor);
     }
 
     // Método para listar todos os setores cadastrados
     public List<Setor> listarTodos() throws RepositorioException {
-        List<Setor> setores = new ArrayList<>();
-        String sql = "SELECT * FROM setor";
-
-        try (Connection conexao = GerenciadorDeConexao.getConnection();
-             PreparedStatement stmt = conexao.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                Setor setor = new Setor();
-                setor.setId(rs.getLong("id"));
-                setor.setNome(rs.getString("nome"));
-                setor.setCapacidadeMax(rs.getInt("capacidade_max"));
-                setor.setBoxesOcupados(rs.getInt("boxes_ocupados"));
-                setores.add(setor);
-            }
-
-        } catch (SQLException e) {
-            throw new RepositorioException("Erro ao buscar a lista de setores no banco de dados.", e);
-        }
-
-        return setores;
+        // Agora o serviço apenas "pede" a lista para o repositório
+        return setorRepositorio.selecionarTodos();
     }
 }
