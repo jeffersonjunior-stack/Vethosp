@@ -9,7 +9,7 @@ public final class GerenciadorDeConexao {
     private static final String URL_PADRAO = "jdbc:mysql://localhost:3306/vethosp_db?useTimezone=true&serverTimezone=UTC";
 
     public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL_PADRAO, "root", "");
+        return DriverManager.getConnection(URL_PADRAO, "root", "SENHA_DA_PESSOA");
     }
 
     public static String getUrl() {

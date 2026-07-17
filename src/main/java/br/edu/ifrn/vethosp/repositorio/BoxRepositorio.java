@@ -35,7 +35,7 @@ public class BoxRepositorio {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Erro ao inserir box no MySQL", e);
+            throw new RepositorioException("Erro ao inserir box no MySQL", e);
         }
     }
 
@@ -69,7 +69,7 @@ public class BoxRepositorio {
                 boxes.add(box);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Erro ao selecionar boxes com setores do MySQL", e);
+            throw new RepositorioException("Erro ao selecionar boxes com setores do MySQL", e);
         }
         return boxes;
     }

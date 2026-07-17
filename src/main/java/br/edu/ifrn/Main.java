@@ -32,7 +32,7 @@ public class Main {
 
             System.out.println("[Teste 2] Cadastrando um Box para este setor...");
             Box novoBox = new Box();
-            novoBox.setNumero(101);
+            novoBox.setIdentificador("Box 101");
             novoBox.setStatus(StatusBox.LIVRE);
             novoBox.setSetor(novoSetor);
             boxServico.cadastrarBox(novoBox);

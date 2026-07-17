@@ -2,7 +2,11 @@ package br.edu.ifrn.vethosp.repositorio;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import br.edu.ifrn.vethosp.modelo.Setor;
 
 public class SetorRepositorio {
@@ -29,7 +33,7 @@ public class SetorRepositorio {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Erro ao inserir setor no MySQL", e);
+            throw new RepositorioException("Erro ao inserir setor no MySQL", e);
         }
     }
 
@@ -44,7 +48,30 @@ public class SetorRepositorio {
             stmt.setLong(2, setor.getId());
             stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Erro ao atualizar setor no MySQL", e);
+            throw new RepositorioException("Erro ao atualizar setor no MySQL", e);
         }
+    }
+
+    // [R] - SELECIONAR TODOS OS SETORES
+    public List<Setor> selecionarTodos() {
+        List<Setor> setores = new ArrayList<>();
+        String sql = "SELECT id, nome, capacidade_max, boxes_ocupados FROM setor";
+
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                Setor setor = new Setor();
+                setor.setId(rs.getLong("id"));
+                setor.setNome(rs.getString("nome"));
+                setor.setCapacidadeMax(rs.getInt("capacidade_max"));
+                setor.setBoxesOcupados(rs.getInt("boxes_ocupados"));
+                setores.add(setor);
+            }
+        } catch (SQLException e) {
+            throw new RepositorioException("Erro ao selecionar todos os setores no MySQL", e);
+        }
+        return setores;
     }
 }

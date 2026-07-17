@@ -32,6 +32,8 @@ public class Box {
     public Setor getSetor() { return setor; }
     public void setSetor(Setor setor) { this.setor = setor; }
 
+    
+
     public boolean isLivre() {
         return status == StatusBox.LIVRE;
     }
